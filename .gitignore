@@ -1,0 +1,8 @@
+.idea
+.vscode
+.env
+logs
+config.yml
+*.jpeg
+.DS_Store
+test-api.http
