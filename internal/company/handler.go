@@ -6,6 +6,7 @@ import (
 	"github.com/dkischenko/xm_app/internal/company/models"
 	"github.com/dkischenko/xm_app/internal/config"
 	uerrors "github.com/dkischenko/xm_app/internal/errors"
+	"github.com/dkischenko/xm_app/pkg/ipapi"
 	"github.com/dkischenko/xm_app/pkg/logger"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -80,6 +81,10 @@ func (h handler) GetCompaniesListHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h handler) CreateCompanyHandler(w http.ResponseWriter, r *http.Request) {
+	if ipapi.IsAllowed() != true {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	companyData := &models.CompanyCreateRequest{}
 	err := json.NewDecoder(r.Body).Decode(companyData)
 	if err != nil {
@@ -154,6 +159,10 @@ func (h handler) UpdateCompanyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) DeleteCompanyHandler(w http.ResponseWriter, r *http.Request) {
+	if ipapi.IsAllowed() != true {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	params := mux.Vars(r)
 	cId, _ := strconv.Atoi(params["id"])
 
