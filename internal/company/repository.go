@@ -6,8 +6,10 @@ import (
 )
 
 type Repository interface {
-	Create(ctx context.Context, company *models.Company) (id string, err error)
-	Find(ctx context.Context, field string, value string) (company models.Company, err error)
-	Update(ctx context.Context, company *models.Company) (err error)
+	Create(ctx context.Context, company models.CompanyCreateRequest, countryId int) (id int, err error)
+	GetList(ctx context.Context) (companies []models.Company, err error)
+	GetCompany(ctx context.Context, companyId int) (company models.Company, err error)
+	Update(ctx context.Context, companyId int, company *models.CompanyUpdateRequest) (err error)
 	Delete(ctx context.Context, companyId int) (err error)
+	CreateCountry(ctx context.Context, company models.CompanyCreateRequest) (id int, err error)
 }

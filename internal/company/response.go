@@ -1,6 +1,6 @@
-package models
+package company
 
-type Country struct {
+type CompanyCreateResponse struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
