@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"os"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -38,11 +39,12 @@ func main() {
 	}
 
 	storage := database.NewStorage(client, l)
+	accessTokenTTL, err := time.ParseDuration(cfg.Auth.AccessTokenTTL)
 	if err != nil {
 		panic(err)
 	}
 
-	service := company.NewService(l, storage)
+	service := company.NewService(l, storage, accessTokenTTL)
 	handler := company.NewHandler(l, service, cfg)
 	handler.Register(router)
 	app.Run(router, l, cfg)

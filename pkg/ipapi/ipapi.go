@@ -70,9 +70,5 @@ func IsAllowed() bool {
 		return false
 	}
 
-	if data.CountryName != allowedCountry {
-		return false
-	}
-
-	return true
+	return data.CountryName != allowedCountry
 }

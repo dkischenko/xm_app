@@ -141,3 +141,34 @@ func (p postgres) CreateCountry(ctx context.Context, company models.CompanyCreat
 
 	return country.Id, nil
 }
+
+func (p postgres) CreateUser(ctx context.Context, user *models.User) (id string, err error) {
+	q := `
+		INSERT INTO xm_db.users(username, password_hash) 
+		    VALUES
+		           ($1, $2)
+		    RETURNING id
+	`
+	err = p.pool.QueryRow(ctx, q, user.Name, user.PasswordHash).Scan(&user.Id)
+	if err != nil {
+		p.logger.Entry.Error(err)
+		return "", fmt.Errorf("Error occurs: %w. %w", err, uerrors.ErrCreateUser)
+	}
+	return user.Id, nil
+}
+
+func (p postgres) FindOneUser(ctx context.Context, name string) (u *models.User, err error) {
+	u = &models.User{}
+	q := `
+		SELECT id, username, password_hash
+		FROM xm_db.users WHERE username = $1
+	`
+	row := p.pool.QueryRow(ctx, q, name)
+	err = row.Scan(&u.Id, &u.Name, &u.PasswordHash)
+	if err != nil {
+		p.logger.Entry.Error(err)
+		return u, err
+	}
+
+	return u, nil
+}

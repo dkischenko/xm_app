@@ -12,4 +12,6 @@ type Repository interface {
 	Update(ctx context.Context, companyId int, company *models.CompanyUpdateRequest) (err error)
 	Delete(ctx context.Context, companyId int) (err error)
 	CreateCountry(ctx context.Context, company models.CompanyCreateRequest) (id int, err error)
+	CreateUser(ctx context.Context, user *models.User) (id string, err error)
+	FindOneUser(ctx context.Context, name string) (u *models.User, err error)
 }
