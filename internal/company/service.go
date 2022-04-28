@@ -18,6 +18,7 @@ type Service struct {
 	tokenManager *auth.Manager
 }
 
+//go:generate mockgen -source=service.go -destination=mocks/service_mock.go
 type IService interface {
 	CreateCountry(ctx context.Context, company models.CompanyCreateRequest) (id int, err error)
 	CreateCompany(ctx context.Context, company models.CompanyCreateRequest, countryId int) (id int, err error)
@@ -27,7 +28,7 @@ type IService interface {
 	GetCompany(ctx context.Context, companyId int) (company models.Company, err error)
 	CreateUser(ctx context.Context, user models.UserRequest) (id string, err error)
 	Login(ctx context.Context, ur *models.UserRequest) (u *models.User, err error)
-	CreateToken(u *models.User) (hash string, err error)
+	CreateToken(uId string) (hash string, err error)
 	CheckAuth(header string) (uuid string, err error)
 }
 
@@ -145,8 +146,8 @@ func (s Service) Login(ctx context.Context, ur *models.UserRequest) (u *models.U
 	return
 }
 
-func (s Service) CreateToken(u *models.User) (hash string, err error) {
-	hash, err = s.tokenManager.CreateJWT(u.Id)
+func (s Service) CreateToken(uId string) (hash string, err error) {
+	hash, err = s.tokenManager.CreateJWT(uId)
 	if err != nil {
 		s.logger.Entry.Errorf("problems with creating jwt token: %s", err)
 		return "", fmt.Errorf("error occurs: %w", uerrors.ErrCreateJWTToken)

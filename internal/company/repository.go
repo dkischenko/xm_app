@@ -5,6 +5,7 @@ import (
 	"github.com/dkischenko/xm_app/internal/company/models"
 )
 
+//go:generate mockgen -source=repository.go -destination=mocks/repository_mock.go
 type Repository interface {
 	Create(ctx context.Context, company models.CompanyCreateRequest, countryId int) (id int, err error)
 	GetList(ctx context.Context) (companies []models.Company, err error)

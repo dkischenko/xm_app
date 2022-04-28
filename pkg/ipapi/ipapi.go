@@ -64,11 +64,11 @@ func GetData() (*IpapiData, error) {
 	return data, nil
 }
 
-func IsAllowed() bool {
+func IsAllowed() (bool, string) {
 	data, err := GetData()
 	if err != nil {
-		return false
+		return false, ""
 	}
 
-	return data.CountryName != allowedCountry
+	return data.CountryName == allowedCountry, data.CountryName
 }

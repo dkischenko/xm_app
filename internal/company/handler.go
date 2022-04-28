@@ -22,6 +22,7 @@ const (
 	companyWithId          = "/v1/companies/{id:[0-9]+}"
 	headerContentType      = "Content-Type"
 	headerValueContentType = "application/json"
+	headerAuthorization    = "Authorization"
 	headerXExpiresAfter    = "X-Expires-After"
 )
 
@@ -79,7 +80,7 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Entry.Errorf("error with user login: %v", err)
 	}
-	hash, err := h.service.CreateToken(usr)
+	hash, err := h.service.CreateToken(usr.Id)
 	if err != nil {
 		h.logger.Entry.Errorf("error with create token: %v", err)
 	}
@@ -187,18 +188,34 @@ func (h handler) GetCompaniesListHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h handler) CreateCompanyHandler(w http.ResponseWriter, r *http.Request) {
-	if !ipapi.IsAllowed() {
+	var token string
+
+	if len(r.Header.Get("Authorization")) > 0 {
+		_, err := h.service.CheckAuth(r.Header.Get("Authorization"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else if ok, country := ipapi.IsAllowed(); ok {
+		hash, err := h.service.CreateToken(country)
+		if err != nil {
+			h.logger.Entry.Errorf("error with create token: %v", err)
+		}
+
+		accessTokenTTL, err := time.ParseDuration(h.config.Auth.AccessTokenTTL)
+		if err != nil {
+			h.logger.Entry.Errorf("Error with access token ttl: %s", err)
+		}
+
+		w.Header().Add(headerXExpiresAfter, time.Now().Local().Add(accessTokenTTL).String())
+		token = hash
+	} else {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	_, err := h.service.CheckAuth(r.Header.Get("Authorization"))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 	companyData := &models.CompanyCreateRequest{}
-	err = json.NewDecoder(r.Body).Decode(companyData)
+	err := json.NewDecoder(r.Body).Decode(companyData)
 	if err != nil {
 		h.logger.Entry.Error("wrong json format")
 		w.WriteHeader(http.StatusBadRequest)
@@ -239,6 +256,7 @@ func (h handler) CreateCompanyHandler(w http.ResponseWriter, r *http.Request) {
 	responseBody := CompanyCreateResponse{
 		Id:   companyId,
 		Name: companyData.Name,
+		Hash: token,
 	}
 
 	if err := json.NewEncoder(w).Encode(responseBody); err != nil {
@@ -271,12 +289,28 @@ func (h handler) UpdateCompanyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) DeleteCompanyHandler(w http.ResponseWriter, r *http.Request) {
-	if !ipapi.IsAllowed() {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	_, err := h.service.CheckAuth(r.Header.Get("Authorization"))
-	if err != nil {
+	var token string
+
+	if len(r.Header.Get("Authorization")) > 0 {
+		_, err := h.service.CheckAuth(r.Header.Get("Authorization"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else if ok, country := ipapi.IsAllowed(); ok {
+		hash, err := h.service.CreateToken(country)
+		if err != nil {
+			h.logger.Entry.Errorf("error with create token: %v", err)
+		}
+
+		accessTokenTTL, err := time.ParseDuration(h.config.Auth.AccessTokenTTL)
+		if err != nil {
+			h.logger.Entry.Errorf("Error with access token ttl: %s", err)
+		}
+
+		w.Header().Add(headerXExpiresAfter, time.Now().Local().Add(accessTokenTTL).String())
+		token = hash
+	} else {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -284,7 +318,7 @@ func (h handler) DeleteCompanyHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	cId, _ := strconv.Atoi(params["id"])
 
-	err = h.service.DeleteCompany(r.Context(), cId)
+	err := h.service.DeleteCompany(r.Context(), cId)
 
 	if err != nil {
 		h.logger.Entry.Errorf("can't delete company: %+v", err)
@@ -293,5 +327,6 @@ func (h handler) DeleteCompanyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add(headerContentType, headerValueContentType)
+	w.Header().Add(headerAuthorization, token)
 	w.WriteHeader(http.StatusOK)
 }
