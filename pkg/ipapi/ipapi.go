@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 )
 
@@ -37,16 +38,18 @@ type IpapiData struct {
 }
 
 const (
-	serviceUrl     = "https://ipapi.co/json/"
+	serviceUrl     = "https://ipapi.co/"
+	responseType   = "/json"
 	allowedCountry = "Cyprus"
 	HeaderKey      = "User-Agent"
 	HeaderValue    = "ipapi.co/#go-v1.18"
 )
 
-func GetData() (*IpapiData, error) {
+func GetData(ip string) (*IpapiData, error) {
 	data := &IpapiData{}
 	ipapiClient := http.Client{}
-	req, err := http.NewRequest("GET", serviceUrl, nil)
+	url := serviceUrl + ip + responseType
+	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set(HeaderKey, HeaderValue)
 	resp, err := ipapiClient.Do(req)
 	defer resp.Body.Close()
@@ -64,8 +67,12 @@ func GetData() (*IpapiData, error) {
 	return data, nil
 }
 
-func IsAllowed() (bool, string) {
-	data, err := GetData()
+func IsAllowed(addr string) (bool, string) {
+	ip, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return false, ""
+	}
+	data, err := GetData(ip)
 	if err != nil {
 		return false, ""
 	}

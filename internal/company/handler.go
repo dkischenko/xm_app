@@ -196,7 +196,7 @@ func (h handler) CreateCompanyHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	} else if ok, country := ipapi.IsAllowed(); ok {
+	} else if ok, country := ipapi.IsAllowed(r.RemoteAddr); ok {
 		hash, err := h.service.CreateToken(country)
 		if err != nil {
 			h.logger.Entry.Errorf("error with create token: %v", err)
@@ -297,7 +297,7 @@ func (h handler) DeleteCompanyHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	} else if ok, country := ipapi.IsAllowed(); ok {
+	} else if ok, country := ipapi.IsAllowed(r.RemoteAddr); ok {
 		hash, err := h.service.CreateToken(country)
 		if err != nil {
 			h.logger.Entry.Errorf("error with create token: %v", err)
