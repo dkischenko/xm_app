@@ -1,0 +1,11 @@
+listen:
+  ip: 0.0.0.0
+  port: 1000
+storage:
+  host: db
+  port: 5432
+  username: postgres
+  password: secret
+  database: postgres
+auth:
+  accessTokenTTL: 120m
